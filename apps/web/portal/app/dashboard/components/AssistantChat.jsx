@@ -51,13 +51,20 @@ export default function AssistantChat({ user, onBack, onRedirect }) {
 
   const typeText = (text) => {
     if (typingTimerRef.current) clearInterval(typingTimerRef.current);
-    setFlowResponse('');
-    let index = 0;
+    if (!text) {
+      setFlowResponse('');
+      return;
+    }
+    
+    // Set first character immediately to bypass React batching race conditions
+    setFlowResponse(text.charAt(0));
+    let index = 1;
     
     typingTimerRef.current = setInterval(() => {
-      setFlowResponse((prev) => prev + text.charAt(index));
-      index += 1;
-      if (index >= text.length) {
+      if (index < text.length) {
+        setFlowResponse((prev) => prev + text.charAt(index));
+        index += 1;
+      } else {
         clearInterval(typingTimerRef.current);
       }
     }, 16);
