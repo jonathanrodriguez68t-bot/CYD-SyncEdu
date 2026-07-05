@@ -68,7 +68,7 @@ export default function AssistantChat({ user, onBack, onRedirect }) {
       const intro = user.role === 'teacher'
         ? "Puedo ayudarte a mostrar calendario, grupos, actividades por calificar, mensajes o reportes."
         : "Puedo ayudarte a mostrar calendario, notas, cursos, actividades o avisos.";
-      typeText(intro);
+      typeText(intro.trim());
     }
 
     const handleTriggerPrompt = async (e) => {
@@ -137,7 +137,7 @@ export default function AssistantChat({ user, onBack, onRedirect }) {
       snd.play().catch(err => console.log("Autoplay de audio bloqueado:", err));
     }
 
-    typeText(assistantResult.text);
+    typeText(assistantResult.text.trim());
     
     // Esperar a que termine de escribir para mostrar resultados
     const readingDelay = assistantResult.text.length * 16 + 800;
@@ -180,14 +180,6 @@ export default function AssistantChat({ user, onBack, onRedirect }) {
             <div className="date">08<span>JUL</span></div>
             <div><strong>Entrega de cartulina</strong><small>Artes visuales - Llevar materiales y boceto del proyecto.</small></div>
           </div>
-          <MediaGallery mediaList={[
-            {
-              type: 'video',
-              url: '/rsc/ElevenLabs_video_google-veo-3-1-fast_Genera una anim_2026-07-05T03_10_46.mp4',
-              title: 'Guia de Exposicion de Ciencias',
-              description: 'Material explicativo de la presentacion en el Aula 4.'
-            }
-          ]} />
         </div>
       );
     }
@@ -250,14 +242,6 @@ export default function AssistantChat({ user, onBack, onRedirect }) {
               )}
             </tbody>
           </table>
-          <MediaGallery mediaList={[
-            {
-              type: 'audio',
-              url: '/rsc/Bienvenida.mp3',
-              title: 'Audio de Bienvenida',
-              description: 'Explicacion rapida del tutor.'
-            }
-          ]} />
         </div>
       );
     }
@@ -280,14 +264,6 @@ export default function AssistantChat({ user, onBack, onRedirect }) {
           <article className="mini-panel"><h2>Calendario</h2><p className="muted">Pide: muestrame el calendario de mis proximas actividades.</p></article>
           <article className="mini-panel"><h2>Notas</h2><p className="muted">Pide: quiero ver mis notas recientes.</p></article>
         </div>
-        <MediaGallery mediaList={[
-          {
-            type: 'audio',
-            url: '/rsc/Lo siento no tengo el acceso.mp3',
-            title: 'Nota de Voz de Soporte',
-            description: 'Instrucciones del Administrador sobre el acceso.'
-          }
-        ]} />
       </div>
     );
   };
@@ -331,8 +307,8 @@ export default function AssistantChat({ user, onBack, onRedirect }) {
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Pregunta lo que quieras..."
               autoComplete="off"
+              style={{ flexGrow: 1 }}
             />
-            <button className="voice-button" type="button">MIC</button>
             <button className="primary send-button" type="submit">Enviar</button>
           </form>
           {isActive && (
