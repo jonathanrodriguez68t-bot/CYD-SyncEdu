@@ -411,7 +411,7 @@ a {
   margin: 4px auto 0;
   padding: 8px;
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) 48px 112px;
+  grid-template-columns: 48px minmax(0, 1fr) 112px;
   gap: 8px;
   border: 1px solid var(--line);
   border-radius: 999px;

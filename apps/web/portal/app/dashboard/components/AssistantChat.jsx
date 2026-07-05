@@ -272,7 +272,6 @@ export default function AssistantChat({ user, onBack, onRedirect }) {
     <section className="avatar-portal" id="avatar-portal">
       <header className="avatar-topbar">
         <div className="topbar-brand">
-          <div className="mark small">CYD</div>
           <div>
             <strong>SyncEdu</strong>
             <span id="avatar-role-label">Portal Asistente</span>
