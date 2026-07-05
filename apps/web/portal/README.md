@@ -5,12 +5,15 @@ Prototipo visual inicial del dashboard SyncEdu.
 ## Estructura
 
 ```txt
-syncedu-portal-prototype/
+apps/web/portal/
 |-- index.html
 |-- css/
 |   `-- styles.css
 |-- js/
 |   `-- app.js
+|-- assets/
+|-- server.js
+|-- package.json
 `-- README.md
 ```
 
