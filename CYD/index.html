@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CYD SyncEdu - Portal</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <section class="login-screen" id="login-screen">
+    <div class="login-card">
+      <div class="login-emblem">CYD</div>
+      <h1>Bienvenido a SyncEdu</h1>
+      <p>Ingresa con tu cuenta institucional</p>
+
+      <form class="login-form" id="login-form">
+        <input id="username" autocomplete="username" placeholder="Usuario" />
+        <input id="password" type="password" autocomplete="current-password" placeholder="Contrasena" />
+        <p class="form-error" id="login-error"></p>
+        <button class="primary" type="submit">Iniciar sesion</button>
+      </form>
+    </div>
+  </section>
+
+  <div class="app hidden" id="app">
+    <aside class="sidebar">
+      <button class="brand" id="brand-toggle" type="button" aria-label="Mostrar u ocultar menu">
+        <div class="mark">CYD</div>
+        <div>
+          <strong>SyncEdu</strong>
+          <span id="portal-label">Portal Educativo</span>
+        </div>
+      </button>
+
+      <nav class="nav" id="nav" aria-label="Navegacion principal"></nav>
+
+      <div class="support">
+        <strong>Soporte IA</strong>
+        <small id="support-copy">SyncIA puede resumir progreso, avisos y tareas pendientes.</small>
+        <button data-action="open-chat">Consultar SyncIA</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-brand">
+          <div class="mark small">CYD</div>
+          <div>
+            <strong>SyncEdu</strong>
+            <span id="topbar-portal-label">Portal Educativo</span>
+          </div>
+        </div>
+        <div class="search">
+          <span class="icon">SR</span>
+          <input id="search-input" aria-label="Buscar" placeholder="Buscar en SyncEdu..." />
+        </div>
+        <div class="profile">
+          <div>
+            <strong id="profile-name"></strong>
+            <span id="profile-role"></span>
+          </div>
+          <div class="avatar" id="profile-avatar"></div>
+          <button class="secondary compact" data-action="logout">Salir</button>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div>
+          <h1 id="hero-title"></h1>
+          <p class="lead" id="hero-copy"></p>
+        </div>
+        <div class="actions" id="hero-actions"></div>
+      </section>
+
+      <section id="content"></section>
+    </main>
+  </div>
+
+  <section class="avatar-portal hidden" id="avatar-portal">
+    <header class="avatar-topbar">
+      <div class="topbar-brand">
+        <div class="mark small">CYD</div>
+        <div>
+          <strong>SyncEdu</strong>
+          <span id="avatar-role-label">Portal Asistente</span>
+        </div>
+      </div>
+      <div class="profile">
+        <div>
+          <strong id="avatar-profile-name"></strong>
+          <span id="avatar-profile-role"></span>
+        </div>
+        <div class="avatar" id="avatar-profile-badge"></div>
+        <button class="secondary compact" data-action="logout">Salir</button>
+      </div>
+    </header>
+
+    <main class="avatar-workspace" id="avatar-workspace">
+      <section class="flow-agent" id="flow-agent" aria-label="Avatar SyncEdu">
+        <div class="flow-avatar-frame">
+          <img src="assets/flow-avatar.jpeg" alt="Avatar asistente SyncEdu" />
+          <span class="flow-status">Flow avatar</span>
+        </div>
+        <div class="flow-copy">
+          <span class="eyebrow">SyncIA</span>
+          <h1 id="flow-title">Hola, soy tu asistente</h1>
+          <p id="flow-response">Puedes pedirme calendario, notas, actividades, cursos o avisos. Cuando lo pidas, te mostrare la informacion aqui mismo.</p>
+        </div>
+        <form class="avatar-composer" id="avatar-composer">
+          <button class="voice-button add-button" type="button" data-action="attach-demo" aria-label="Agregar archivo">+</button>
+          <input id="avatar-input" placeholder="Pregunta lo que quieras..." autocomplete="off" />
+          <button class="voice-button" type="button" data-action="voice-demo" aria-label="Enviar audio">MIC</button>
+          <button class="primary send-button" type="submit">Enviar</button>
+        </form>
+      </section>
+
+      <section class="assistant-result hidden" id="assistant-result" aria-live="polite"></section>
+    </main>
+  </section>
+
+  <section class="chat minimized hidden" id="chat" aria-label="Chatbot SyncIA">
+    <div class="chat-head">
+      <div>
+        <strong>SyncIA</strong>
+        <small>Asistente del portal</small>
+      </div>
+      <span class="status-dot" aria-hidden="true"></span>
+    </div>
+    <div class="messages" id="messages"></div>
+    <form class="chat-form" id="chat-form">
+      <input id="chat-input" aria-label="Mensaje para SyncIA" placeholder="Preguntar a SyncIA..." />
+      <button aria-label="Enviar">&gt;</button>
+    </form>
+  </section>
+
+  <div class="modal hidden" id="modal" role="dialog" aria-modal="true">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h2 id="modal-title"></h2>
+        <button class="icon-button" data-action="close-modal" aria-label="Cerrar">X</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
