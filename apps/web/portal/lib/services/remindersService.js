@@ -26,6 +26,15 @@ let mockRemindersDb = [
   }
 ];
 
+if (typeof window !== 'undefined') {
+  const stored = localStorage.getItem('mockRemindersDb');
+  if (stored) {
+    mockRemindersDb = JSON.parse(stored);
+  } else {
+    localStorage.setItem('mockRemindersDb', JSON.stringify(mockRemindersDb));
+  }
+}
+
 export async function fetchReminders(subjectFilter = 'Todos') {
   // --- INTEGRACIÓN BASE DE DATOS ---
   // const db = await getDbConnection();
@@ -58,5 +67,8 @@ export async function createReminder(reminderData) {
   };
 
   mockRemindersDb = [newReminder, ...mockRemindersDb];
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('mockRemindersDb', JSON.stringify(mockRemindersDb));
+  }
   return newReminder;
 }

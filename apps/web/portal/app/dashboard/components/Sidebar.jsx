@@ -69,19 +69,7 @@ export default function Sidebar({ user, currentView, onViewChange, isCollapsed, 
         ))}
       </nav>
 
-      {!isCollapsed && (
-        <div className="support">
-          <strong>Soporte IA</strong>
-          <small id="support-copy">
-            {user.role === 'student'
-              ? 'SyncIA puede resumir tus notas, avisos y tareas pendientes.'
-              : user.role === 'teacher'
-              ? 'SyncIA puede ayudarte a preparar avisos, revisar entregas y detectar pendientes.'
-              : 'SyncIA puede resumir solicitudes, expedientes y alertas institucionales.'}
-          </small>
-          <button onClick={() => onViewChange('chat-ia')}>Consultar SyncIA</button>
-        </div>
-      )}
+
     </aside>
   );
 }

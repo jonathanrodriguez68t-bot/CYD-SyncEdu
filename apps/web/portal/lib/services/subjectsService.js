@@ -15,6 +15,15 @@ let mockSubjectsDb = [
   { code: 'MA', name: 'Matematicas', group: '6to Grado B', studentsCount: 22, teacherCode: 'doc002' }
 ];
 
+if (typeof window !== 'undefined') {
+  const stored = localStorage.getItem('mockSubjectsDb');
+  if (stored) {
+    mockSubjectsDb = JSON.parse(stored);
+  } else {
+    localStorage.setItem('mockSubjectsDb', JSON.stringify(mockSubjectsDb));
+  }
+}
+
 export async function fetchAllSubjects() {
   // --- INTEGRACIÓN BASE DE DATOS ---
   // const db = await getDbConnection();
@@ -48,6 +57,9 @@ export async function createSubject(subjectData) {
   };
 
   mockSubjectsDb.push(newSubject);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('mockSubjectsDb', JSON.stringify(mockSubjectsDb));
+  }
   await logAction('Administrador', 'admin', `Creo una nueva asignatura: ${newSubject.name} (${newSubject.code}) para ${newSubject.group} asignada al profesor ${newSubject.teacherCode}.`);
   return newSubject;
 }

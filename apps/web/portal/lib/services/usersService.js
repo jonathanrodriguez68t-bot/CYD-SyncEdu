@@ -85,6 +85,22 @@ let mockAdminsDb = [
   }
 ];
 
+if (typeof window !== 'undefined') {
+  const storedStud = localStorage.getItem('mockStudentsDb');
+  if (storedStud) {
+    mockStudentsDb = JSON.parse(storedStud);
+  } else {
+    localStorage.setItem('mockStudentsDb', JSON.stringify(mockStudentsDb));
+  }
+
+  const storedTch = localStorage.getItem('mockTeachersDb');
+  if (storedTch) {
+    mockTeachersDb = JSON.parse(storedTch);
+  } else {
+    localStorage.setItem('mockTeachersDb', JSON.stringify(mockTeachersDb));
+  }
+}
+
 export async function authenticateUser(username, password) {
   const cleanUser = username.trim().toLowerCase();
 
@@ -134,6 +150,9 @@ export async function createStudent(studentData) {
   };
 
   mockStudentsDb.push(newStudent);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('mockStudentsDb', JSON.stringify(mockStudentsDb));
+  }
   await logAction('Administrador', 'admin', `Registro un nuevo estudiante: ${newStudent.name} (Carnet: ${newStudent.carnet}).`);
   return newStudent;
 }
@@ -153,6 +172,9 @@ export async function createTeacher(teacherData) {
   };
 
   mockTeachersDb.push(newTeacher);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('mockTeachersDb', JSON.stringify(mockTeachersDb));
+  }
   await logAction('Administrador', 'admin', `Registro un nuevo profesor: ${newTeacher.name} (Codigo: ${newTeacher.codigo}).`);
   return newTeacher;
 }

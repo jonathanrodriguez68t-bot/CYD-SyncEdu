@@ -20,6 +20,15 @@ let mockGradesDb = [
   { id: 8, student: 'Carlos Mejia', studentCarnet: 'est002', subject: 'Matematicas', activity: 'Examen Unidad 2', score: 8.2, teacherCode: 'doc002' }
 ];
 
+if (typeof window !== 'undefined') {
+  const stored = localStorage.getItem('mockGradesDb');
+  if (stored) {
+    mockGradesDb = JSON.parse(stored);
+  } else {
+    localStorage.setItem('mockGradesDb', JSON.stringify(mockGradesDb));
+  }
+}
+
 export async function fetchAllGrades(subjectFilter = 'Todos') {
   if (subjectFilter === 'Todos') {
     return [...mockGradesDb];
@@ -56,6 +65,9 @@ export async function createGradeRecord(gradeData, teacherCode) {
   };
 
   mockGradesDb.unshift(newRecord);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('mockGradesDb', JSON.stringify(mockGradesDb));
+  }
   await logAction(teacherCode, 'teacher', `Cargo calificacion de ${newRecord.score} en ${newRecord.subject} para ${newRecord.student}.`);
   return newRecord;
 }
