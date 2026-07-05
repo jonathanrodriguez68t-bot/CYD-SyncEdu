@@ -43,8 +43,17 @@ export default function AssistantChat({ user, onBack }) {
         : "Puedo ayudarte a mostrar calendario, notas, cursos, actividades o avisos.";
       typeText(intro);
     }
+
+    const handleTriggerPrompt = async (e) => {
+      const promptText = e.detail;
+      await submitPrompt(promptText);
+    };
+
+    window.addEventListener('trigger-chat-prompt', handleTriggerPrompt);
+
     return () => {
       if (typingTimerRef.current) clearInterval(typingTimerRef.current);
+      window.removeEventListener('trigger-chat-prompt', handleTriggerPrompt);
     };
   }, [user]);
 
@@ -84,9 +93,8 @@ export default function AssistantChat({ user, onBack }) {
     };
   };
 
-  const handleComposerSubmit = async (e) => {
-    e.preventDefault();
-    const cleanPrompt = prompt.trim();
+  const submitPrompt = async (promptText) => {
+    const cleanPrompt = promptText.trim();
     if (!cleanPrompt) return;
 
     setIsThinking(true);
@@ -121,6 +129,11 @@ export default function AssistantChat({ user, onBack }) {
         }, 1600);
       }
     }, readingDelay);
+  };
+
+  const handleComposerSubmit = async (e) => {
+    e.preventDefault();
+    await submitPrompt(prompt);
   };
 
   const renderIntentComponent = (intent) => {

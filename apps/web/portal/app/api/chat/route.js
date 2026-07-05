@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { getLowestGradeSubject, getGroupPerformance } from '../../../lib/services/gradesService';
 
 export async function POST(request) {
   try {
@@ -147,6 +148,36 @@ Debes responder UNICAMENTE en formato JSON con la siguiente estructura:
     } else if (lowerPrompt.includes('calendario') || lowerPrompt.includes('actividades') || lowerPrompt.includes('agenda')) {
       intent = 'calendar';
       text = 'De acuerdo, aquí tienes las actividades escolares programadas en el calendario.';
+      redirect = role === 'teacher' ? '/dashboard/teacher' : '/dashboard/student';
+    } else if (lowerPrompt.includes('mejorar') || lowerPrompt.includes('materia baja') || lowerPrompt.includes('bajo')) {
+      // ANALÍTICA: Qué materia debo mejorar
+      const analysis = await getLowestGradeSubject(username || 'estudiante');
+      if (analysis) {
+        text = `Analizando tu expediente académico, la materia con promedio más bajo es ${analysis.subject} con una nota media de ${analysis.average}. Te sugiero repasar sus temas clave.`;
+      } else {
+        text = 'No he encontrado registros de tus calificaciones en el sistema para calcular qué materia debes mejorar.';
+      }
+      intent = 'grades';
+      redirect = '/dashboard/student';
+    } else if (lowerPrompt.includes('rendimiento grupal') || lowerPrompt.includes('promedio del grupo') || lowerPrompt.includes('promedio grupal')) {
+      // ANALÍTICA: Rendimiento grupal
+      let subject = 'Ciencias';
+      if (lowerPrompt.includes('quimica') || lowerPrompt.includes('química')) {
+        subject = 'Laboratorio de Quimica';
+      } else if (lowerPrompt.includes('matematica') || lowerPrompt.includes('matemática')) {
+        subject = 'Matematicas';
+      }
+      const groupData = await getGroupPerformance(subject);
+      if (groupData) {
+        text = `El rendimiento promedio grupal en la materia de ${groupData.subject} es de ${groupData.average}, calculado con base en ${groupData.totalGradesCount} notas registradas.`;
+      } else {
+        text = `No se encontraron registros de calificaciones grupales para la materia ${subject}.`;
+      }
+      intent = role === 'teacher' ? 'teacher_gradebook' : 'grades';
+      redirect = role === 'teacher' ? '/dashboard/teacher' : '/dashboard/student';
+    } else if (lowerPrompt.includes('aviso') || lowerPrompt.includes('anuncio') || lowerPrompt.includes('recordatorio')) {
+      text = 'Tienes avisos escolares publicados por tus profesores. Puedes verlos en detalle en tu Muro de Anuncios.';
+      intent = 'suggestions';
       redirect = role === 'teacher' ? '/dashboard/teacher' : '/dashboard/student';
     } else if (lowerPrompt.includes('nota') || lowerPrompt.includes('calificacion') || lowerPrompt.includes('promedio')) {
       if (role === 'teacher') {
