@@ -55,7 +55,7 @@ export default function DashboardLayout({ children }) {
   }
 
   // If the view is the SyncIA assistant full view (for student/teacher), render the AssistantChat full page
-  if (currentView === 'chat-ia' && currentUser.role !== 'admin') {
+  if (currentView === 'chat-ia' && currentUser.role !== 'admin' && currentUser.role !== 'student') {
     return (
       <AssistantChat 
         user={currentUser} 
@@ -120,6 +120,28 @@ export default function DashboardLayout({ children }) {
     setChatInput('');
     submitFloatingChat(text);
   };
+
+  if (currentUser.role === 'student') {
+    return (
+      <div className="app student-split-layout" id="app" style={{ display: 'flex', height: '100vh', background: '#0a0b0d', overflow: 'hidden' }}>
+        {/* Left Column: Conversational AI Penguin */}
+        <aside style={{ width: '400px', minWidth: '400px', height: '100%', borderRight: '1px solid rgba(255,255,255,0.08)', background: '#0a0b0d', display: 'flex', flexDirection: 'column' }}>
+          <AssistantChat 
+            user={currentUser} 
+            isSidebarMode={true} 
+          />
+        </aside>
+
+        {/* Right Column: Dashboard tables */}
+        <main className="main" style={{ flexGrow: 1, height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', background: '#0e1015' }}>
+          <Topbar user={currentUser} />
+          <div style={{ flexGrow: 1, padding: '0px', width: '100%' }}>
+            {children}
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className={`app ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`} id="app">

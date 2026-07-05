@@ -6,7 +6,7 @@ import MediaGallery from './MediaGallery';
 import { fetchGradesByStudent, fetchAllGrades } from '../../../lib/services/gradesService';
 import { fetchSubjectsByTeacher } from '../../../lib/services/subjectsService';
 
-export default function AssistantChat({ user, onBack, onRedirect }) {
+export default function AssistantChat({ user, onBack, onRedirect, isSidebarMode }) {
   const router = useRouter();
   const [prompt, setPrompt] = useState('');
   const [flowTitle, setFlowTitle] = useState(`Hola, ${user?.shortName || ''}`);
@@ -274,6 +274,45 @@ export default function AssistantChat({ user, onBack, onRedirect }) {
       </div>
     );
   };
+
+  if (isSidebarMode) {
+    return (
+      <section className="avatar-portal" id="avatar-portal" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', background: '#0a0b0d', padding: '24px 16px', boxSizing: 'border-box' }}>
+        <header className="avatar-topbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="topbar-brand">
+            <div>
+              <strong style={{ fontSize: '15px', color: '#f8fafc', display: 'block' }}>SyncIA</strong>
+              <span id="avatar-role-label" style={{ fontSize: '11px', color: '#98a2b3', display: 'block' }}>Tutor Inteligente</span>
+            </div>
+          </div>
+          <button className="secondary compact" onClick={handleLogout} style={{ padding: '6px 12px', fontSize: '12px' }}>Salir</button>
+        </header>
+
+        <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '20px', padding: '10px 0' }}>
+          <div className="flow-avatar-frame" style={{ width: '150px', height: '150px', borderRadius: '50%', overflow: 'hidden', border: '3px solid rgba(29, 143, 255, 0.3)', boxShadow: '0 0 20px rgba(29,143,255,0.1)' }}>
+            <img src={avatarSrc} alt="Avatar asistente" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <div className="flow-copy" style={{ textAlign: 'center', maxWidth: '100%', padding: '0 8px' }}>
+            <span className="eyebrow" style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: '#1d8fff', fontWeight: 'bold', letterSpacing: '1px', marginBottom: '4px' }}>SyncIA</span>
+            <h1 id="flow-title" style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 8px 0', color: '#fff' }}>{flowTitle}</h1>
+            <p id="flow-response" style={{ fontSize: '13.5px', color: '#98a2b3', lineHeight: '1.5', margin: 0 }}>{flowResponse}</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleComposerSubmit} style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '999px', padding: '6px 6px 6px 12px', width: '100%', marginTop: 'auto', boxSizing: 'border-box' }}>
+          <input
+            id="avatar-input"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Preguntar a SyncIA..."
+            autoComplete="off"
+            style={{ flexGrow: 1, background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: '13px' }}
+          />
+          <button className="primary send-button" type="submit" style={{ padding: '8px 16px', borderRadius: '999px', background: '#1d8fff', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}>Enviar</button>
+        </form>
+      </section>
+    );
+  }
 
   return (
     <section className="avatar-portal" id="avatar-portal">

@@ -1640,3 +1640,14 @@ tr:last-child td {
     transition-duration: .01ms !important;
   }
 }
+
+/* Student split layout layout stacking rules */
+.student-split-layout .layout {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px;
+}
+
+.student-split-layout .layout > * {
+  width: 100% !important;
+}

@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { getLowestGradeSubject, getGroupPerformance } from '../../../lib/services/gradesService';
+import { getLowestGradeSubject, getGroupPerformance, fetchGradesByStudent } from '../../../lib/services/gradesService';
+import { fetchReminders } from '../../../lib/services/remindersService';
+import { fetchAllSubjects } from '../../../lib/services/subjectsService';
+import { fetchTeachers } from '../../../lib/services/usersService';
 
 export async function POST(request) {
   try {
@@ -38,10 +41,43 @@ export async function POST(request) {
     if (OPENAI_API_KEY) {
       console.log('[Next.js API] Usando integracion directa de OpenAI/ElevenLabs (n8n no configurado)');
       try {
+        let databaseContext = "";
+        try {
+          if (role === 'student') {
+            const studentGrades = await fetchGradesByStudent(username || 'estudiante');
+            const studentReminders = await fetchReminders();
+            const subjects = await fetchAllSubjects();
+            const teachersList = await fetchTeachers();
+            const studentSubjects = subjects.filter(s => s.group === '6to Grado B');
+            const teacherNames = studentSubjects.map(s => {
+              const t = teachersList.find(tch => tch.codigo === s.teacherCode);
+              return `${t ? t.name : s.teacherCode} (${s.name})`;
+            });
+
+            const avg = studentGrades.length > 0
+              ? (studentGrades.reduce((sum, g) => sum + g.score, 0) / studentGrades.length).toFixed(1)
+              : '0.0';
+
+            const lowest = await getLowestGradeSubject(username || 'estudiante');
+
+            databaseContext = `
+DATOS REALES DEL EXPEDIENTE DEL ESTUDIANTE EN LA BASE DE DATOS (ÚSALOS PARA CONTESTAR):
+- Promedio General del Estudiante: ${avg}
+- Calificaciones Recientes: ${studentGrades.map(g => `${g.subject}: ${g.score.toFixed(1)} en la actividad "${g.activity}"`).join(', ')}
+- Materia con promedio más bajo (a mejorar): ${lowest ? `${lowest.subject} (con promedio ${lowest.average.toFixed(1)})` : 'Ninguna'}
+- Profesores asignados a sus materias: ${teacherNames.join(', ')}
+- Próximas actividades y tareas en el calendario: ${studentReminders.map(r => `${r.title} de la materia ${r.subject} programada para el ${r.date}`).join('; ')}
+`;
+          }
+        } catch (err) {
+          console.error('[Next.js API] Error al armar contexto para OpenAI:', err);
+        }
+
         // A. Consultar a OpenAI para clasificar intencion y generar respuesta
         const systemPrompt = `Eres SyncIA, asistente de inteligencia artificial para la plataforma educativa SyncEdu.
 El usuario actual tiene el nombre "${username}" y el rol de "${role}" (student, teacher, admin).
 Analiza el prompt del usuario y responde de forma breve (máximo 2 oraciones).
+${databaseContext}
 Clasifica la intencion del usuario en uno de estos valores:
 - "calendar" (si pide proximas actividades, tareas, ferias, fechas, etc.)
 - "grades" (si un estudiante pide ver sus notas o promedio)
@@ -165,20 +201,36 @@ Debes responder UNICAMENTE en formato JSON con la siguiente estructura:
         text = 'Entendido, abriendo el libro de calificaciones para calificar las actividades pendientes.';
         redirect = '/dashboard/teacher';
       }
-    } else if (lowerPrompt.includes('calendario') || lowerPrompt.includes('actividades') || lowerPrompt.includes('agenda')) {
+    } else if (lowerPrompt.includes('calendario') || lowerPrompt.includes('actividades') || lowerPrompt.includes('agenda') || lowerPrompt.includes('tarea')) {
       intent = 'calendar';
-      text = 'De acuerdo, aquí tienes las actividades escolares programadas en el calendario.';
+      const reminders = await fetchReminders();
+      if (reminders.length > 0) {
+        text = `Tienes ${reminders.length} actividades programadas: ${reminders.map(r => `${r.title} (${r.subject}) para el ${r.date}`).join('. ')}.`;
+      } else {
+        text = 'De acuerdo, aquí tienes las actividades escolares programadas en el calendario.';
+      }
       redirect = role === 'teacher' ? '/dashboard/teacher' : '/dashboard/student';
-    } else if (lowerPrompt.includes('mejorar') || lowerPrompt.includes('materia baja') || lowerPrompt.includes('bajo')) {
+    } else if (lowerPrompt.includes('mejorar') || lowerPrompt.includes('materia baja') || lowerPrompt.includes('bajo') || lowerPrompt.includes('menor nota') || lowerPrompt.includes('peor nota')) {
       // ANALÍTICA: Qué materia debo mejorar
       const analysis = await getLowestGradeSubject(username || 'estudiante');
       if (analysis) {
-        text = `Analizando tu expediente académico, la materia con promedio más bajo es ${analysis.subject} con una nota media de ${analysis.average}. Te sugiero repasar sus temas clave.`;
+        text = `Analizando tu expediente académico, la materia con promedio más bajo es ${analysis.subject} con una nota media de ${analysis.average.toFixed(1)}. Te sugiero repasar sus temas clave.`;
       } else {
         text = 'No he encontrado registros de tus calificaciones en el sistema para calcular qué materia debes mejorar.';
       }
       intent = 'grades';
       redirect = '/dashboard/student';
+    } else if (lowerPrompt.includes('maestro') || lowerPrompt.includes('profesor') || lowerPrompt.includes('docente') || lowerPrompt.includes('maestros') || lowerPrompt.includes('profesores')) {
+      const subjects = await fetchAllSubjects();
+      const teachersList = await fetchTeachers();
+      const studentSubjects = subjects.filter(s => s.group === '6to Grado B'); // Maria's group is default
+      const teacherNames = studentSubjects.map(s => {
+        const t = teachersList.find(tch => tch.codigo === s.teacherCode);
+        return `${t ? t.name : s.teacherCode} (en ${s.name})`;
+      });
+      text = `Tus profesores asignados son: ${teacherNames.join(', ')}.`;
+      intent = 'suggestions';
+      redirect = null;
     } else if (lowerPrompt.includes('rendimiento grupal') || lowerPrompt.includes('promedio del grupo') || lowerPrompt.includes('promedio grupal')) {
       // ANALÍTICA: Rendimiento grupal
       let subject = 'Ciencias';
@@ -199,14 +251,20 @@ Debes responder UNICAMENTE en formato JSON con la siguiente estructura:
       text = 'Tienes avisos escolares publicados por tus profesores. Puedes verlos en detalle en tu Muro de Anuncios.';
       intent = 'suggestions';
       redirect = role === 'teacher' ? '/dashboard/teacher' : '/dashboard/student';
-    } else if (lowerPrompt.includes('nota') || lowerPrompt.includes('calificacion') || lowerPrompt.includes('promedio')) {
+    } else if (lowerPrompt.includes('nota') || lowerPrompt.includes('calificacion') || lowerPrompt.includes('promedio') || lowerPrompt.includes('calificaciones')) {
       if (role === 'teacher') {
         intent = 'teacher_gradebook';
         text = 'Abriendo el registro de notas de los alumnos.';
         redirect = '/dashboard/teacher';
       } else {
         intent = 'grades';
-        text = 'Aquí tienes el desglose de tus calificaciones y promedio del periodo actual.';
+        const studentGrades = await fetchGradesByStudent(username || 'estudiante');
+        if (studentGrades.length > 0) {
+          const avg = (studentGrades.reduce((sum, g) => sum + g.score, 0) / studentGrades.length).toFixed(1);
+          text = `Tu promedio general es de ${avg}. Tus notas recientes son: ${studentGrades.map(g => `${g.subject}: ${g.score.toFixed(1)}`).join(', ')}.`;
+        } else {
+          text = 'Aquí tienes el desglose de tus calificaciones y promedio del periodo actual.';
+        }
         redirect = '/dashboard/student';
       }
     } else {
