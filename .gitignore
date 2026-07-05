@@ -1,0 +1,28 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+
+# Next.js build output
+.next/
+out/
+build/
+
+# Environment variables (contains private API Keys)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

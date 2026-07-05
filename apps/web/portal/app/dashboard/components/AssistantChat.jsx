@@ -48,15 +48,25 @@ export default function AssistantChat({ user, onBack }) {
     };
   }, [user]);
 
+  const getIntentTitle = (intent) => {
+    switch (intent) {
+      case 'calendar': return 'Calendario y proximas actividades';
+      case 'grades': return 'Calificaciones recientes';
+      case 'teacher_gradebook': return 'Panel de Calificaciones Docente';
+      case 'error_permission': return 'Acceso Denegado - Permisos Insuficientes';
+      default: return 'Sugerencias';
+    }
+  };
+
   const askAssistant = async (p) => {
     try {
-      const response = await fetch("/api/assistant", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: p,
-          role: user.role,
-          user: user.name
+          role: user?.role,
+          username: user?.username
         })
       });
       if (response.ok) {
@@ -64,27 +74,14 @@ export default function AssistantChat({ user, onBack }) {
         return data;
       }
     } catch (e) {
-      console.log("Local router fallback");
+      console.error("Error al consultar API chat:", e);
     }
-
-    // Local response mapping
-    const text = p.toLowerCase();
-    if (user.role === 'teacher' && (text.includes("calificar") || text.includes("calificacion") || text.includes("nota"))) {
-      return { intent: "teacher_gradebook", title: "Actividades por calificar", reply: "Te muestro tus actividades por calificar." };
-    }
-    if (text.includes("calendario") || text.includes("actividad") || text.includes("actividades") || text.includes("fecha") || text.includes("fechas") || text.includes("tarea") || text.includes("tareas") || text.includes("evento") || text.includes("eventos")) {
-      return { intent: "calendar", title: "Calendario y proximas actividades", reply: "Te muestro el calendario academico." };
-    }
-    if (text.includes("nota") || text.includes("calificacion")) {
-      return { intent: user.role === 'teacher' ? "teacher_gradebook" : "grades", title: user.role === 'teacher' ? "Actividades por calificar" : "Tus notas recientes", reply: "Te muestro la informacion academica." };
-    }
-    if (text.includes("curso") || text.includes("materia") || text.includes("grupo")) {
-      return { intent: "courses", title: user.role === 'teacher' ? "Tus grupos asignados" : "Tus cursos", reply: "Te muestro tus cursos o grupos." };
-    }
-    if (text.includes("aviso") || text.includes("mensaje")) {
-      return { intent: user.role === 'teacher' ? "messages" : "notices", title: user.role === 'teacher' ? "Mensajes docentes" : "Avisos", reply: "Te muestro tus avisos o mensajes." };
-    }
-    return { intent: "suggestions", title: "Sugerencias", reply: "Puedo ayudarte con calendario, notas, cursos y avisos." };
+    return {
+      text: "Lo siento, tuve un problema de conexion al procesar tu solicitud.",
+      intent: "suggestions",
+      redirect: null,
+      audio: ""
+    };
   };
 
   const handleComposerSubmit = async (e) => {
@@ -95,20 +92,34 @@ export default function AssistantChat({ user, onBack }) {
     setIsThinking(true);
     const randomGif = Math.random() > 0.5 ? '/rsc/generating_1.gif' : '/rsc/generating_2.gif';
     setAvatarSrc(randomGif);
+    setPrompt('');
 
     const assistantResult = await askAssistant(cleanPrompt);
-    const replyText = `Listo. Te muestro: ${assistantResult.title}.`;
-    const readingDelay = replyText.length * 16 + 3600;
+    
+    // Reproducir audio Base64 de ElevenLabs / Fallback
+    if (assistantResult.audio) {
+      const snd = new Audio("data:audio/mp3;base64," + assistantResult.audio);
+      snd.play().catch(err => console.log("Autoplay de audio bloqueado:", err));
+    }
 
-    typeText(replyText);
-    setPrompt('');
+    typeText(assistantResult.text);
+    
+    // Esperar a que termine de escribir para mostrar resultados
+    const readingDelay = assistantResult.text.length * 16 + 800;
 
     setTimeout(() => {
       setIsActive(true);
-      setResultTitle(assistantResult.title);
+      setResultTitle(getIntentTitle(assistantResult.intent));
       setResultBody(assistantResult.intent);
       setIsThinking(false);
       setAvatarSrc('/assets/flow-avatar.jpeg');
+
+      // Redirigir automaticamente si la intencion lo requiere y esta permitida
+      if (assistantResult.redirect && assistantResult.intent !== 'error_permission') {
+        setTimeout(() => {
+          router.push(assistantResult.redirect);
+        }, 1600);
+      }
     }, readingDelay);
   };
 
@@ -203,6 +214,18 @@ export default function AssistantChat({ user, onBack }) {
               description: 'Rendimiento historico en el periodo actual.'
             }
           ]} />
+        </div>
+      );
+    }
+    if (intent === 'error_permission') {
+      return (
+        <div className="card section" style={{ border: '1px solid #ff4d4f', background: 'rgba(255, 77, 79, 0.04)', padding: '20px' }}>
+          <h2 style={{ color: '#ff4d4f', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>⚠️</span> Acceso Denegado
+          </h2>
+          <p className="muted" style={{ margin: 0, fontSize: '14px', lineHeight: '1.6' }}>
+            Tu rol actual de <strong>{user?.label}</strong> no cuenta con la autorizacion ni los permisos academicos requeridos para consultar o interactuar con este modulo docente.
+          </p>
         </div>
       );
     }
