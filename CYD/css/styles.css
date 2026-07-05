@@ -111,8 +111,8 @@ a {
 }
 
 .login-emblem {
-  width: 54px;
-  height: 54px;
+  width: 74px;
+  height: 74px;
   border-radius: 14px;
   display: grid;
   place-items: center;
@@ -120,6 +120,18 @@ a {
   box-shadow: 0 0 0 8px rgba(255, 255, 255, .06);
   font-weight: 900;
   font-size: 18px;
+}
+
+.login-emblem.logo-image {
+  overflow: hidden;
+  background: #fff;
+}
+
+.login-emblem.logo-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .login-card h1 {
@@ -263,7 +275,7 @@ a {
 }
 
 .avatar-workspace.avatar-active {
-  grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+  grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
   place-items: stretch;
   align-items: stretch;
 }
@@ -370,7 +382,7 @@ a {
 }
 
 .assistant-result > * {
-  animation: resultReveal .34s var(--ease) both;
+  animation: resultReveal .42s var(--ease) both;
 }
 
 .assistant-result-head {
@@ -496,8 +508,8 @@ a {
   width: 50px;
   height: 50px;
   border-radius: 10px;
-  background: linear-gradient(135deg, var(--blue), var(--blue-3));
-  color: #fff;
+  background: #fff url("../assets/flow-avatar.jpeg") center / contain no-repeat;
+  color: transparent;
   display: grid;
   place-items: center;
   font-family: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
@@ -1055,9 +1067,10 @@ tr:last-child td {
 
 .month-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(112px, 1fr));
+  grid-template-columns: repeat(7, minmax(116px, 1fr));
   gap: 8px;
   overflow-x: auto;
+  padding-bottom: 6px;
 }
 
 .weekday {
@@ -1069,7 +1082,7 @@ tr:last-child td {
 }
 
 .month-day {
-  min-height: 128px;
+  min-height: 132px;
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1122,6 +1135,8 @@ tr:last-child td {
   font-size: 12px;
   font-weight: 800;
   line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .day-event small {

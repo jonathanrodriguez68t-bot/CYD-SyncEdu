@@ -99,6 +99,9 @@ const roleCopy = {
 let currentUser = null;
 let currentView = "home";
 let currentCalendarDate = "2026-07-01";
+let lastAvatarPrompt = "";
+const AVATAR_REPLY_HOLD_MS = 3600;
+const AVATAR_REPLY_TYPE_SPEED_MS = 16;
 
 const loginScreen = document.querySelector("#login-screen");
 const app = document.querySelector("#app");
@@ -528,6 +531,10 @@ function openActivityForm() {
     });
     closeModal();
     showToast("Actividad agregada", "Ya aparece en el calendario compartido.", "success");
+    if (!avatarPortal.classList.contains("hidden") && !assistantResult.classList.contains("hidden")) {
+      renderAssistantResult(lastAvatarPrompt || "Calendario", renderCalendarView());
+      return;
+    }
     renderView("calendar");
   });
 }
@@ -541,6 +548,12 @@ function moveCalendar(delta) {
   const date = new Date(`${currentCalendarDate}T00:00:00`);
   date.setMonth(date.getMonth() + delta);
   currentCalendarDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
+  if (currentCalendarDate < "2026-01-01") currentCalendarDate = "2026-01-01";
+  if (currentCalendarDate > "2026-12-01") currentCalendarDate = "2026-12-01";
+  if (!avatarPortal.classList.contains("hidden") && !assistantResult.classList.contains("hidden")) {
+    renderAssistantResult(lastAvatarPrompt || "Calendario", renderCalendarView());
+    return;
+  }
   renderView("calendar");
 }
 
@@ -667,65 +680,106 @@ function logout() {
   showToast("Sesion cerrada", "Puedes ingresar con otro rol.", "success");
 }
 
-function handleAvatarPrompt(prompt) {
+async function handleAvatarPrompt(prompt) {
   flowAgent.classList.add("thinking");
-  const text = prompt.toLowerCase();
-  let title = "Respuesta del asistente";
-  let body = "";
+  const assistant = await askAssistant(prompt);
+  const title = assistant.title;
+  const body = renderIntent(assistant.intent);
+  const replyText = `Listo. Te muestro: ${title}.`;
+  const readingDelay = replyText.length * AVATAR_REPLY_TYPE_SPEED_MS + AVATAR_REPLY_HOLD_MS;
 
-  if (currentUser.role === "teacher" && (text.includes("calificar") || text.includes("calificacion") || text.includes("nota"))) {
-    title = "Actividades por calificar";
-    body = renderTeacherGradebook();
-  } else if (text.includes("calendario") || text.includes("actividad") || text.includes("actividades")) {
-    title = "Calendario y proximas actividades";
-    body = renderCalendarView();
-  } else if (text.includes("nota") || text.includes("calificacion")) {
-    title = currentUser.role === "teacher" ? "Actividades por calificar" : "Tus notas recientes";
-    body = currentUser.role === "teacher" ? renderTeacherGradebook() : renderGradesView(false);
-  } else if (text.includes("curso") || text.includes("materia") || text.includes("grupo")) {
-    title = currentUser.role === "teacher" ? "Tus grupos asignados" : "Tus cursos";
-    body = currentUser.role === "teacher"
-      ? views.teacher.groups()
-      : views.student.courses();
-  } else if (text.includes("aviso") || text.includes("mensaje")) {
-    title = currentUser.role === "teacher" ? "Mensajes docentes" : "Avisos";
-    body = currentUser.role === "teacher"
-      ? views.teacher.messages()
-      : views.student.notices();
-  } else {
-    title = "Sugerencias";
-    body = renderCards("Puedo mostrarte", [
-      ["Calendario", "Escribe: muestrame el calendario de mis proximas actividades."],
-      ["Notas", "Escribe: quiero ver mis notas recientes."],
-      ["Cursos", "Escribe: muestrame mis cursos o grupos."],
-      ["Avisos", "Escribe: que avisos tengo pendientes."]
-    ]);
-  }
-
-  typeAvatarText(`Listo. Te muestro: ${title}.`);
+  typeAvatarText(replyText);
   setTimeout(() => {
     avatarWorkspace.classList.add("avatar-active");
-    assistantResult.classList.remove("hidden");
-    assistantResult.innerHTML = `<div class="assistant-result-head"><span>Peticion</span><strong>${prompt}</strong></div>${body}`;
-    assistantResult.classList.remove("view-enter");
-    void assistantResult.offsetWidth;
-    assistantResult.classList.add("view-enter");
+    lastAvatarPrompt = prompt;
+    renderAssistantResult(prompt, body);
     flowAgent.classList.remove("thinking");
-    bindContentActions();
-  }, 420);
+  }, readingDelay);
+}
+
+async function askAssistant(prompt) {
+  try {
+    const response = await fetch("/api/assistant", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt,
+        role: currentUser.role,
+        user: currentUser.name
+      })
+    });
+    if (!response.ok) throw new Error("Assistant API unavailable");
+    const data = await response.json();
+    return normalizeAssistantResult(data, prompt);
+  } catch (error) {
+    return localAssistantResult(prompt);
+  }
+}
+
+function normalizeAssistantResult(data, prompt) {
+  const valid = new Set(["calendar", "grades", "courses", "notices", "teacher_gradebook", "messages", "suggestions"]);
+  const fallback = localAssistantResult(prompt);
+  return {
+    intent: valid.has(data.intent) ? data.intent : fallback.intent,
+    title: data.title || fallback.title,
+    reply: data.reply || fallback.reply
+  };
+}
+
+function localAssistantResult(prompt) {
+  const text = prompt.toLowerCase();
+  if (currentUser.role === "teacher" && (text.includes("calificar") || text.includes("calificacion") || text.includes("nota"))) {
+    return { intent: "teacher_gradebook", title: "Actividades por calificar", reply: "Te muestro tus actividades por calificar." };
+  }
+  if (text.includes("calendario") || text.includes("actividad") || text.includes("actividades") || text.includes("fecha") || text.includes("fechas") || text.includes("tarea") || text.includes("tareas") || text.includes("evento") || text.includes("eventos")) {
+    return { intent: "calendar", title: "Calendario y proximas actividades", reply: "Te muestro el calendario academico." };
+  }
+  if (text.includes("nota") || text.includes("calificacion")) {
+    return { intent: currentUser.role === "teacher" ? "teacher_gradebook" : "grades", title: currentUser.role === "teacher" ? "Actividades por calificar" : "Tus notas recientes", reply: "Te muestro la informacion academica." };
+  }
+  if (text.includes("curso") || text.includes("materia") || text.includes("grupo")) {
+    return { intent: "courses", title: currentUser.role === "teacher" ? "Tus grupos asignados" : "Tus cursos", reply: "Te muestro tus cursos o grupos." };
+  }
+  if (text.includes("aviso") || text.includes("mensaje")) {
+    return { intent: currentUser.role === "teacher" ? "messages" : "notices", title: currentUser.role === "teacher" ? "Mensajes docentes" : "Avisos", reply: "Te muestro tus avisos o mensajes." };
+  }
+  return { intent: "suggestions", title: "Sugerencias", reply: "Puedo ayudarte con calendario, notas, cursos y avisos." };
+}
+
+function renderIntent(intent) {
+  if (intent === "calendar") return renderCalendarView();
+  if (intent === "teacher_gradebook") return renderTeacherGradebook();
+  if (intent === "grades") return renderGradesView(false);
+  if (intent === "courses") return currentUser.role === "teacher" ? views.teacher.groups() : views.student.courses();
+  if (intent === "notices") return views.student.notices();
+  if (intent === "messages") return views.teacher.messages();
+  return renderCards("Puedo mostrarte", [
+    ["Calendario", "Pide: muestrame el calendario de mis proximas actividades."],
+    ["Notas", "Pide: quiero ver mis notas recientes."],
+    ["Cursos", "Pide: muestrame mis cursos o grupos."],
+    ["Avisos", "Pide: que avisos tengo pendientes."]
+  ]);
+}
+
+function renderAssistantResult(prompt, body) {
+  assistantResult.classList.remove("hidden");
+  assistantResult.innerHTML = `<div class="assistant-result-head"><span>Peticion</span><strong>${prompt}</strong></div>${body}`;
+  assistantResult.classList.remove("view-enter");
+  void assistantResult.offsetWidth;
+  assistantResult.classList.add("view-enter");
+  bindContentActions();
 }
 
 function typeAvatarText(text) {
   const target = document.querySelector("#flow-response");
   target.textContent = "";
   let index = 0;
-  const speed = 16;
 
   const timer = setInterval(() => {
     target.textContent += text.charAt(index);
     index += 1;
     if (index >= text.length) clearInterval(timer);
-  }, speed);
+  }, AVATAR_REPLY_TYPE_SPEED_MS);
 }
 
 function showToast(title, message, type = "success") {
