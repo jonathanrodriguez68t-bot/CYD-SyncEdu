@@ -178,6 +178,12 @@ function renderAvatarPortal() {
   assistantResult.classList.add("hidden");
   assistantResult.innerHTML = "";
   avatarInput.value = "";
+  
+  const avatarImg = document.querySelector(".flow-avatar-frame img");
+  if (avatarImg) {
+    avatarImg.src = "assets/flow-avatar.jpeg";
+  }
+  
   bindContentActions();
 }
 
@@ -682,6 +688,11 @@ function logout() {
 
 async function handleAvatarPrompt(prompt) {
   flowAgent.classList.add("thinking");
+  const avatarImg = document.querySelector(".flow-avatar-frame img");
+  if (avatarImg) {
+    const randomGif = Math.random() > 0.5 ? "rsc/generating_1.gif" : "rsc/generating_2.gif";
+    avatarImg.src = randomGif;
+  }
   const assistant = await askAssistant(prompt);
   const title = assistant.title;
   const body = renderIntent(assistant.intent);
@@ -694,6 +705,9 @@ async function handleAvatarPrompt(prompt) {
     lastAvatarPrompt = prompt;
     renderAssistantResult(prompt, body);
     flowAgent.classList.remove("thinking");
+    if (avatarImg) {
+      avatarImg.src = "assets/flow-avatar.jpeg";
+    }
   }, readingDelay);
 }
 
@@ -841,3 +855,17 @@ document.querySelector("[data-action='close-modal']").addEventListener("click", 
 modal.addEventListener("click", (event) => {
   if (event.target === modal) closeModal();
 });
+
+function playWelcomeAudio() {
+  const audio = new Audio("rsc/Bienvenida.mp3");
+  audio.play().catch(err => {
+    console.log("Autoplay was blocked by browser. Will play on first click/interaction.");
+    const playOnInteraction = () => {
+      audio.play().catch(e => console.error("Error playing audio on interaction:", e));
+      document.removeEventListener("click", playOnInteraction);
+    };
+    document.addEventListener("click", playOnInteraction);
+  });
+}
+
+window.addEventListener("load", playWelcomeAudio);
