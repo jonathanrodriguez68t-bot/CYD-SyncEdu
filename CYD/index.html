@@ -1,161 +1,124 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CYD SyncEdu - Dashboard</title>
+  <title>CYD SyncEdu - Portal</title>
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <div class="app">
+  <section class="login-screen" id="login-screen">
+    <div class="login-card">
+      <div class="login-emblem">CYD</div>
+      <h1>Bienvenido a SyncEdu</h1>
+      <p>Ingresa con tu cuenta institucional</p>
+
+      <form class="login-form" id="login-form">
+        <input id="username" autocomplete="username" placeholder="Usuario" />
+        <input id="password" type="password" autocomplete="current-password" placeholder="Contrasena" />
+        <p class="form-error" id="login-error"></p>
+        <button class="primary" type="submit">Iniciar sesion</button>
+      </form>
+    </div>
+  </section>
+
+  <div class="app hidden" id="app">
     <aside class="sidebar">
-      <div class="brand">
-        <div class="mark">SE</div>
+      <button class="brand" id="brand-toggle" type="button" aria-label="Mostrar u ocultar menu">
+        <div class="mark">CYD</div>
         <div>
           <strong>SyncEdu</strong>
-          <span>Portal Educativo</span>
+          <span id="portal-label">Portal Educativo</span>
         </div>
-      </div>
+      </button>
 
-      <nav class="nav" aria-label="Navegacion principal">
-        <button class="active"><span class="icon">IN</span><span>Inicio</span></button>
-        <button><span class="icon">EX</span><span>Expedientes</span></button>
-        <button><span class="icon">NT</span><span>Notas</span></button>
-        <button><span class="icon">CR</span><span>Cursos</span></button>
-        <button><span class="icon">AC</span><span>Actividades</span></button>
-        <button><span class="icon">AV</span><span>Avisos</span></button>
-      </nav>
+      <nav class="nav" id="nav" aria-label="Navegacion principal"></nav>
 
       <div class="support">
         <strong>Soporte IA</strong>
-        <small>SyncIA puede resumir tu progreso, avisos y tareas pendientes.</small>
-        <button>Consultar SyncIA</button>
+        <small id="support-copy">SyncIA puede resumir progreso, avisos y tareas pendientes.</small>
+        <button data-action="open-chat">Consultar SyncIA</button>
       </div>
     </aside>
 
     <main class="main">
       <header class="topbar">
+        <div class="topbar-brand">
+          <div class="mark small">CYD</div>
+          <div>
+            <strong>SyncEdu</strong>
+            <span id="topbar-portal-label">Portal Educativo</span>
+          </div>
+        </div>
         <div class="search">
           <span class="icon">SR</span>
-          <input aria-label="Buscar" placeholder="Buscar notas, cursos, actividades..." />
+          <input id="search-input" aria-label="Buscar" placeholder="Buscar en SyncEdu..." />
         </div>
         <div class="profile">
           <div>
-            <strong>Maria Fernanda Lopez</strong>
-            <span>Estudiante - 6to grado</span>
+            <strong id="profile-name"></strong>
+            <span id="profile-role"></span>
           </div>
-          <div class="avatar">MF</div>
+          <div class="avatar" id="profile-avatar"></div>
+          <button class="secondary compact" data-action="logout">Salir</button>
         </div>
       </header>
 
       <section class="hero">
         <div>
-          <h1>Bienvenida de nuevo, Maria</h1>
-          <p class="lead">Este es tu resumen academico de 6to grado. Hay una actividad proxima y una materia que conviene repasar esta semana.</p>
+          <h1 id="hero-title"></h1>
+          <p class="lead" id="hero-copy"></p>
         </div>
-        <div class="actions">
-          <button class="secondary">Ver calendario</button>
-          <button class="primary">Consultar SyncIA</button>
-        </div>
+        <div class="actions" id="hero-actions"></div>
       </section>
 
-      <div class="layout">
-        <div>
-          <section class="kpis" aria-label="Indicadores principales">
-            <article class="card kpi">
-              <div class="label">Promedio general <span class="icon">UP</span></div>
-              <strong id="kpi-grade">8.6</strong>
-              <span class="delta" id="kpi-grade-note">+0.3 vs mes pasado</span>
-            </article>
-            <article class="card kpi">
-              <div class="label">Asistencia <span class="icon">AS</span></div>
-              <strong id="kpi-attendance">96%</strong>
-              <span class="delta" id="kpi-attendance-note">2 faltas justificadas</span>
-            </article>
-            <article class="card kpi">
-              <div class="label">Pendientes <span class="icon">!</span></div>
-              <strong id="kpi-pending">2</strong>
-              <span class="delta warn" id="kpi-pending-note">Requiere atencion</span>
-            </article>
-          </section>
-
-          <section class="card section">
-            <div class="section-head">
-              <h2 id="records-title">Notas recientes</h2>
-              <a class="link" href="#">Ver todas</a>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Materia</th>
-                  <th>Actividad</th>
-                  <th>Nota</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody id="records">
-                <tr>
-                  <td><span class="subject"><span class="chip-icon">M</span>Matematicas</span></td>
-                  <td>Examen Unidad 2</td>
-                  <td><strong>9.0</strong></td>
-                  <td><span class="badge">Aprobado</span></td>
-                </tr>
-                <tr>
-                  <td><span class="subject"><span class="chip-icon">C</span>Ciencias</span></td>
-                  <td>Laboratorio de quimica</td>
-                  <td><strong>8.5</strong></td>
-                  <td><span class="badge">Aprobado</span></td>
-                </tr>
-                <tr>
-                  <td><span class="subject"><span class="chip-icon">L</span>Lenguaje</span></td>
-                  <td>Ensayo literario</td>
-                  <td><strong>8.0</strong></td>
-                  <td><span class="badge">Aprobado</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </section>
-
-          <section class="card section insight">
-            <div>
-              <h2 id="insight-title">Analisis de SyncIA</h2>
-              <p id="insight-copy">Maria Fernanda mantiene buen rendimiento. Se recomienda revisar Matematicas dos veces por semana porque el siguiente examen concentra el 30% del periodo.</p>
-              <button class="primary">Ver reporte completo de IA</button>
-            </div>
-            <div class="brain">IA</div>
-          </section>
-        </div>
-
-        <aside class="side">
-          <section class="card section">
-            <div class="section-head">
-              <h2>Proximas actividades</h2>
-              <a class="link" href="#">Calendario</a>
-            </div>
-            <div class="event">
-              <div class="date">07<span>JUL</span></div>
-              <div><strong>Exposicion de ciencias</strong><small>Tema: sostenibilidad. Aula 4, 8:00 AM.</small></div>
-            </div>
-            <div class="event">
-              <div class="date">08<span>JUL</span></div>
-              <div><strong>Entrega de cartulina</strong><small>Materia: artes visuales. Llevar materiales.</small></div>
-            </div>
-            <div class="event">
-              <div class="date">12<span>JUL</span></div>
-              <div><strong>Orientacion academica</strong><small>Auditorio principal. Llevar cuaderno de seguimiento.</small></div>
-            </div>
-          </section>
-
-          <section class="notice">
-            <strong>Feria de ciencias 2026</strong>
-            <small>Revise fechas, criterios y recordatorios oficiales.</small>
-          </section>
-        </aside>
-      </div>
+      <section id="content"></section>
     </main>
   </div>
 
-  <section class="chat minimized" aria-label="Chatbot SyncIA">
+  <section class="avatar-portal hidden" id="avatar-portal">
+    <header class="avatar-topbar">
+      <div class="topbar-brand">
+        <div class="mark small">CYD</div>
+        <div>
+          <strong>SyncEdu</strong>
+          <span id="avatar-role-label">Portal Asistente</span>
+        </div>
+      </div>
+      <div class="profile">
+        <div>
+          <strong id="avatar-profile-name"></strong>
+          <span id="avatar-profile-role"></span>
+        </div>
+        <div class="avatar" id="avatar-profile-badge"></div>
+        <button class="secondary compact" data-action="logout">Salir</button>
+      </div>
+    </header>
+
+    <main class="avatar-workspace" id="avatar-workspace">
+      <section class="flow-agent" id="flow-agent" aria-label="Avatar SyncEdu">
+        <div class="flow-avatar-frame">
+          <img src="assets/flow-avatar.jpeg" alt="Avatar asistente SyncEdu" />
+          <span class="flow-status">Flow avatar</span>
+        </div>
+        <div class="flow-copy">
+          <span class="eyebrow">SyncIA</span>
+          <h1 id="flow-title">Hola, soy tu asistente</h1>
+          <p id="flow-response">Puedes pedirme calendario, notas, actividades, cursos o avisos. Cuando lo pidas, te mostrare la informacion aqui mismo.</p>
+        </div>
+        <form class="avatar-composer" id="avatar-composer">
+          <button class="voice-button add-button" type="button" data-action="attach-demo" aria-label="Agregar archivo">+</button>
+          <input id="avatar-input" placeholder="Pregunta lo que quieras..." autocomplete="off" />
+          <button class="voice-button" type="button" data-action="voice-demo" aria-label="Enviar audio">MIC</button>
+          <button class="primary send-button" type="submit">Enviar</button>
+        </form>
+      </section>
+
+      <section class="assistant-result hidden" id="assistant-result" aria-live="polite"></section>
+    </main>
+  </section>
+
+  <section class="chat minimized hidden" id="chat" aria-label="Chatbot SyncIA">
     <div class="chat-head">
       <div>
         <strong>SyncIA</strong>
@@ -163,17 +126,25 @@
       </div>
       <span class="status-dot" aria-hidden="true"></span>
     </div>
-    <div class="messages" id="messages">
-      <div class="msg bot">Hola, puedo ayudarte a revisar tus notas, actividades, cursos o avisos.</div>
-      <div class="msg user">Que debo atender esta semana?</div>
-      <div class="msg bot">Hay exposicion de ciencias el 7 de julio y una entrega de cartulina el 8. Tambien conviene repasar Matematicas.</div>
-    </div>
+    <div class="messages" id="messages"></div>
     <form class="chat-form" id="chat-form">
       <input id="chat-input" aria-label="Mensaje para SyncIA" placeholder="Preguntar a SyncIA..." />
       <button aria-label="Enviar">&gt;</button>
     </form>
   </section>
+
+  <div class="modal hidden" id="modal" role="dialog" aria-modal="true">
+    <div class="modal-panel">
+      <div class="modal-head">
+        <h2 id="modal-title"></h2>
+        <button class="icon-button" data-action="close-modal" aria-label="Cerrar">X</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
   <script src="js/app.js"></script>
 </body>
 </html>
-
