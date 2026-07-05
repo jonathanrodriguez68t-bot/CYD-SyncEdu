@@ -3,8 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import MediaGallery from './MediaGallery';
+import { fetchGradesByStudent, fetchAllGrades } from '../../../lib/services/gradesService';
+import { fetchSubjectsByTeacher } from '../../../lib/services/subjectsService';
 
-export default function AssistantChat({ user, onBack }) {
+export default function AssistantChat({ user, onBack, onRedirect }) {
   const router = useRouter();
   const [prompt, setPrompt] = useState('');
   const [flowTitle, setFlowTitle] = useState(`Hola, ${user?.shortName || ''}`);
@@ -16,6 +18,31 @@ export default function AssistantChat({ user, onBack }) {
   const [resultBody, setResultBody] = useState(null);
   
   const typingTimerRef = useRef(null);
+
+  // Dynamic lists states for tables
+  const [chatGrades, setChatGrades] = useState([]);
+  const [chatSubjects, setChatSubjects] = useState([]);
+
+  useEffect(() => {
+    if (user) {
+      const loadChatData = async () => {
+        try {
+          if (user.role === 'student') {
+            const grades = await fetchGradesByStudent(user.username);
+            setChatGrades(grades);
+          } else if (user.role === 'teacher') {
+            const grades = await fetchAllGrades('Todos');
+            setChatGrades(grades);
+            const subjs = await fetchSubjectsByTeacher(user.username);
+            setChatSubjects(subjs);
+          }
+        } catch (err) {
+          console.error("Error cargando informacion en chat:", err);
+        }
+      };
+      loadChatData();
+    }
+  }, [user]);
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
@@ -125,7 +152,11 @@ export default function AssistantChat({ user, onBack }) {
       // Redirigir automaticamente si la intencion lo requiere y esta permitida
       if (assistantResult.redirect && assistantResult.intent !== 'error_permission') {
         setTimeout(() => {
-          router.push(assistantResult.redirect);
+          if (onRedirect) {
+            onRedirect(assistantResult.redirect, cleanPrompt, assistantResult.text);
+          } else {
+            router.push(assistantResult.redirect);
+          }
         }, 1600);
       }
     }, readingDelay);
@@ -163,26 +194,30 @@ export default function AssistantChat({ user, onBack }) {
     if (intent === 'teacher_gradebook') {
       return (
         <div className="card section">
-          <h2>Calificar actividades</h2>
-          <table>
+          <h2>Tus Materias y Evaluaciones de Alumnos</h2>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th>Grupo</th>
+                <th>Estudiante</th>
+                <th>Materia</th>
                 <th>Actividad</th>
-                <th>Entregas</th>
+                <th>Calificacion</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>6B</td>
-                <td>Laboratorio de quimica</td>
-                <td><strong>18/22</strong></td>
-              </tr>
-              <tr>
-                <td>7A</td>
-                <td>Quiz semanal</td>
-                <td><strong>21/25</strong></td>
-              </tr>
+              {chatGrades.slice(0, 6).map((g) => (
+                <tr key={g.id}>
+                  <td>{g.student}</td>
+                  <td><span className="badge" style={{ background: 'rgba(29, 143, 255, 0.15)', color: '#1d8fff' }}>{g.subject}</span></td>
+                  <td>{g.activity}</td>
+                  <td><strong>{g.score.toFixed(1)}</strong></td>
+                </tr>
+              ))}
+              {chatGrades.length === 0 && (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: 'center' }}>No hay notas cargadas.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -191,40 +226,36 @@ export default function AssistantChat({ user, onBack }) {
     if (intent === 'grades') {
       return (
         <div className="card section">
-          <h2>Notas recientes</h2>
-          <table>
+          <h2>Tus Calificaciones Recientes</h2>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
                 <th>Materia</th>
-                <th>Actividad</th>
-                <th>Nota</th>
+                <th>Actividad Evaluada</th>
+                <th>Calificacion</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>Matematicas</td>
-                <td>Examen Unidad 2</td>
-                <td><strong>9.0</strong></td>
-              </tr>
-              <tr>
-                <td>Ciencias</td>
-                <td>Laboratorio de quimica</td>
-                <td><strong>8.5</strong></td>
-              </tr>
+              {chatGrades.map((g) => (
+                <tr key={g.id}>
+                  <td>{g.subject}</td>
+                  <td>{g.activity}</td>
+                  <td><strong>{g.score.toFixed(1)}</strong></td>
+                </tr>
+              ))}
+              {chatGrades.length === 0 && (
+                <tr>
+                  <td colSpan="3" style={{ textAlign: 'center' }}>No tienes calificaciones registradas en el sistema.</td>
+                </tr>
+              )}
             </tbody>
           </table>
           <MediaGallery mediaList={[
             {
               type: 'audio',
               url: '/rsc/Bienvenida.mp3',
-              title: 'Audio del Docente',
-              description: 'Retroalimentacion del profesor sobre el laboratorio.'
-            },
-            {
-              type: 'image',
-              url: '/rsc/generating_1.gif',
-              title: 'Grafico de Progreso',
-              description: 'Rendimiento historico en el periodo actual.'
+              title: 'Audio de Bienvenida',
+              description: 'Explicacion rapida del tutor.'
             }
           ]} />
         </div>

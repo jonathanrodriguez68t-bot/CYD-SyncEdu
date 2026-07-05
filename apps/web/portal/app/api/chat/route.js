@@ -48,14 +48,15 @@ Clasifica la intencion del usuario en uno de estos valores:
 - "teacher_gradebook" (si un profesor pide calificar, ver notas globales, libro de notas, etc.)
 - "suggestions" (cualquier otra consulta o conversacion general)
 
-REGLA DE PERMISOS CRITICA:
-Si el usuario es un estudiante (role = "student") e intenta pedir calificar actividades ("teacher_gradebook"), debes denegar el acceso. En este caso específico, cambia la intencion a "error_permission", pon la propiedad "redirect" como null, y responde amablemente que no cuenta con los permisos necesarios para calificar o acceder al panel docente.
+REGLA DE PERMISOS Y ÁMBITO CRÍTICA:
+- Si el usuario pregunta cosas técnicas (como configuraciones de docker, consultas sql, código fuente, scripts, base de datos) o temas fuera del ámbito educativo (poemas, recetas, chistes), debes denegar el acceso. En este caso específico, cambia la intencion a "error_permission", pon la propiedad "redirect" como null, y responde amablemente que por seguridad no tienes permitido responder sobre esos temas y que solo eres un asistente escolar de SyncEdu.
+- Si el usuario es un estudiante (role = "student") e intenta pedir calificar actividades o ver el libro de notas del profesor ("teacher_gradebook"), cambia la intencion a "error_permission", pon la propiedad "redirect" como null, y responde amablemente que no cuenta con los permisos necesarios para calificar o acceder al panel docente.
 
 Debes responder UNICAMENTE en formato JSON con la siguiente estructura:
 {
   "text": "Tu respuesta en texto corto y claro para el usuario",
   "intent": "calendar | grades | teacher_gradebook | suggestions | error_permission",
-  "redirect": "/dashboard/student | /dashboard/teacher | null (dependiendo del intent y si es permitido)"
+  "redirect": "/dashboard/student | /dashboard/teacher | null"
 }`;
 
         const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -132,6 +133,25 @@ Debes responder UNICAMENTE en formato JSON con la siguiente estructura:
     let intent = 'suggestions';
     let redirect = null;
     let audioFileName = 'Bienvenida.mp3';
+
+    // B. Bloquear consultas tecnicas, de programacion o fuera de ambito
+    const forbiddenWords = [
+      'sql', 'base de datos', 'docker', 'credentials', 'credenciales', 'password',
+      'contraseña', 'código', 'code', 'script', 'programar', 'programacion', 'database',
+      'query', 'drop table', 'select *', 'config', 'droplet', 'digitalocean', 'n8n workflow',
+      'poema', 'chiste', 'receta', 'pizza', 'juego', 'musica', 'cancion'
+    ];
+
+    const isTechnicalOrOffTopic = forbiddenWords.some(word => lowerPrompt.includes(word));
+
+    if (isTechnicalOrOffTopic) {
+      return NextResponse.json({
+        text: "Lo siento, como asistente educativo de SyncEdu, no estoy autorizado para procesar consultas tecnicas, de programacion, seguridad o temas ajenos al ambito escolar.",
+        intent: "error_permission",
+        redirect: null,
+        audio: loadLocalAudioBase64('Lo siento no tengo el acceso.mp3')
+      });
+    }
 
     // A. Evaluar permisos y clasificar intenciones
     if (lowerPrompt.includes('calificar') || lowerPrompt.includes('gradebook') || lowerPrompt.includes('notas globales') || lowerPrompt.includes('docente')) {

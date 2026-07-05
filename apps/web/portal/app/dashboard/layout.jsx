@@ -55,6 +55,16 @@ export default function DashboardLayout({ children }) {
           setCurrentView('home');
           router.push(`/dashboard/${currentUser.role}`);
         }} 
+        onRedirect={(targetPath, userText, botText) => {
+          setChatMessages((prev) => [
+            ...prev,
+            { role: 'user', text: userText },
+            { role: 'bot', text: botText }
+          ]);
+          setIsChatOpen(true);
+          setCurrentView('home');
+          router.push(targetPath);
+        }}
       />
     );
   }
