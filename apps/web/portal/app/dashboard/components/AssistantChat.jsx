@@ -56,13 +56,13 @@ export default function AssistantChat({ user, onBack, onRedirect }) {
       return;
     }
     
-    // Set first character immediately to bypass React batching race conditions
-    setFlowResponse(text.charAt(0));
-    let index = 1;
+    let currentText = '';
+    let index = 0;
     
     typingTimerRef.current = setInterval(() => {
       if (index < text.length) {
-        setFlowResponse((prev) => prev + text.charAt(index));
+        currentText += text.charAt(index);
+        setFlowResponse(currentText);
         index += 1;
       } else {
         clearInterval(typingTimerRef.current);
